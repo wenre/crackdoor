@@ -1,0 +1,47 @@
+ldh [12]                ;
+jne #0x800, drop        ;test protocol ipv4
+ldb [23]                ;
+jne #0x6, udp           ;test protocol tcp
+ldh [20]                ;
+jset #0x1fff, drop      ;
+ldxb 4*([14]&0xf)       ;
+ldb [x + 26]            ;
+and #0xf0               ;
+rsh #0x2                ;
+add x                   ;
+tax                     ;
+ldb [x + 15]            ;
+jne #0xd3, drop         ;magic num 1 tcp
+ldb [x + 17]            ;
+jne #0xfc, drop         ;magic num 2 tcp
+ldb [x + 20]            ;
+jne #0x34, drop         ;magic num 3 tcp
+ret #0xffff             ;packet condition match(tcp)
+udp: jne #0x11, icmp    ;test protocol udp
+ldh [20]                ;
+jset #0x1fff, drop      ;
+ldxb 4*([14]&0xf)       ;
+ldh [x + 24]            ;
+jne #0x93f7, drop       ;magic num 1 udp
+ldb [x + 29]            ;
+jne #0xc3, drop         ;magic num 2 udp
+ret #0xffff             ;packet condition match(udp)
+icmp: jne #0x1, sctp    ;test protocol icmp
+ldh [20]                ;
+jset #0x1fff, drop      ;
+ldxb 4*([14]&0xf)       ;
+ldb [x + 14]            ;
+jne #0x8, drop          ;
+ldb [x + 24]            ;
+jne #0xf3, drop         ;magic num 1 icmp
+ldb [x + 27]            ;
+jne #0xe6, drop         ;magic num 2 icmp
+ret #0xffff             ;packet condition match(icmp)
+sctp: jne #0x84, drop  ;test protocol sctp
+ldh [20]                ;
+jset #0x1fff, drop      ;
+ldxb 4*([14]&0xf)       ;
+ld [x + 43]             ;
+jne #0x98ef7685, drop   ;magic num 1 sctp
+ret #0xffff             ;packet condition match(sctp)
+drop: ret #0            ;dosen't match
